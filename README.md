@@ -3,7 +3,7 @@
 
 ## [Bizhacks Hackathon](https://github.com/ved-n/Ved-Nigam-Portfolio/tree/main/bizhacks)
 
-### The prompt for this Hackathon was the advent of AI, specifically how Artificial Intelligence may be able to affect the return on investment of products/services made by mankind. Is this going to be a resource or something that will change the footprint of mankind severely?
+#### The prompt for this Hackathon was the advent of AI, specifically how Artificial Intelligence may be able to affect the return on investment of products/services made by mankind. Is this going to be a resource or something that will change the footprint of mankind severely?
 
 ## Introduction to Machine Learning Portfolio
 ### This is a collection of an application of all significant topics we covered in the introductory Machine Learning class at the University of Texas at Dallas.
