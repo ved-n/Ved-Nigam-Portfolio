@@ -1,0 +1,219 @@
+---
+title: "project"
+output: html_document
+date: "2023-03-20"
+---
+
+# Loading required libraries
+```{r}
+library(MASS)
+library(glmnet)
+library(olsrr)
+library(ggplot2)
+library(reshape)
+library(car)
+```
+
+
+```{r}
+walmart <- read.csv(file = "Walmart_Store_sales.csv", header = TRUE)
+nrow(walmart)
+```
+
+# Building Linear Model
+```{r}
+fit <- lm((Weekly_Sales) ~ Holiday_Flag + Temperature + Unemployment, data = walmart)
+summary(fit)
+
+ 
+
+# Lasso
+# x = walmart[,4:6]
+# x_add = walmart[,8:8]
+# x <- cbind(x, x_add)
+# x = as.matrix(x)
+
+# lambdas <- 10^seq(2, -3, by = -.1)
+# lasso_reg <- cv.glmnet(x, y, alpha = 1,
+#                       lambda = lambdas, standardize = TRUE, nfolds = 10)
+
+# lambda_best <- lasso_reg$lambda.min
+
+# lasso_model <- glmnet(x, y, alpha = 1, lambda = lambda_best, standardize = TRUE)
+# lasso_model$beta
+
+# We see from the p values of the summary that Fuel Price does not effect the
+# model much, so we are going to build another without it
+#fit <- lm((Weekly_Sales) ~ Holiday_Flag + Temperature + Unemployment, data = walmart)
+#summary(fit)
+
+# Using CPI as the response variable
+fit1 <- lm((CPI) ~ Holiday_Flag + Temperature + Unemployment + Fuel_Price, data = walmart)
+summary(fit1)
+```
+
+# Data Exploration
+```{r}
+walmart2 <- melt(walmart[,3:8], id.vars = 'Weekly_Sales')
+ggplot(walmart2) +
+  geom_jitter(aes(value, Weekly_Sales, colour = variable),) +
+  facet_wrap(~variable, scales = "free_x")
+
+walmart2 <- melt(walmart[,3:8], id.vars = 'CPI')
+ggplot(walmart2) +
+  geom_jitter(aes(value, CPI, colour = variable),) +
+  facet_wrap(~variable, scales = "free_x")
+
+store_1 <- subset(walmart, Store == 1)
+store_1_melted <- melt(store_1[,3:8], id.vars = 'Weekly_Sales')
+ggplot(store_1_melted) +
+  geom_jitter(aes(value, Weekly_Sales, colour = variable),) +
+  facet_wrap(~variable, scales = "free_x")
+
+store_1_melted <- melt(store_1[,3:8], id.vars = 'CPI')
+ggplot(store_1_melted) +
+  geom_jitter(aes(value, CPI, colour = variable),) +
+  facet_wrap(~variable, scales = "free_x")
+
+walmart$Date <- as.Date(walmart$Date, format ="%d-%m-%Y")
+
+ggplot(walmart) +
+  aes(x = Date, y = Weekly_Sales) +
+  geom_bar(stat = "identity") +
+  xlim(as.Date(c("2011-01-01", "2011-12-31"))) +
+  ggtitle("Weekly Sales in 2011 Across all Walmarts")
+
+# Thanksgiving season
+ggplot(walmart) +
+  aes(x = Date, y = Weekly_Sales) +
+  geom_bar(stat = "identity") +
+  xlim(as.Date(c("2011-11-5", "2011-12-6"))) +
+  ggtitle("Weekly Sales around Thanksgiving Time Across all Walmarts in 2011")
+
+# Christmas time
+ggplot(walmart) +
+  aes(x = Date, y = Weekly_Sales) +
+  geom_bar(stat = "identity") +
+  xlim(as.Date(c("2011-12-10", "2012-1-10"))) +
+  ggtitle("Weekly Sales around Christmas Time Across all Walmarts in 2011")
+
+anova(fit)
+```
+
+# Residual Analysis on Weekly Sales
+```{r}
+nrow(is.na(walmart)) # Checking to see if there are NA in data
+
+
+stdres <- stdres(fit)
+studres <- studres(fit)
+Rstudent <- rstudent(fit)
+
+range(stdres)
+
+barplot(height = stdres, names.arg = 1:6435,
+        main = "Standardized Residuals", xlab = "Index",
+        ylab = "Standardized Residuals", ylim=c(-5,5))
+abline(h=3, col = "Red", lwd=2)
+abline(h=-3, col = "Red", lwd=2)
+
+barplot(height = studres, names.arg = 1:6435,
+        main = "Studentized Residuals", xlab = "Index",
+        ylab = "Studentized Residuals", ylim=c(-5, 5))
+abline(h=3, col = "Red", lwd=2)
+abline(h=-3, col = "Red", lwd=2)
+
+quantile <- qt(.05/(2*6435), 6429, lower.tail = F)
+quantile
+
+barplot(height = Rstudent, names.arg = 1:6435,
+        main = "RStudent Residuals", xlab = "Index",
+        ylab = "RStudent Residuals", ylim=c(-5,5))
+abline(h=quantile, col = "Red", lwd=2)
+abline(h=-quantile, col = "Red", lwd=2)
+```
+
+# Residual Analysis on CPI
+```{r}
+stdres1 <- stdres(fit1)
+studres1 <- studres(fit1)
+Rstudent1 <- rstudent(fit1)
+
+range(stdres1)
+
+barplot(height = stdres1, names.arg = 1:6435,
+        main = "Standardized Residuals", xlab = "Index",
+        ylab = "Standardized Residuals", ylim=c(-5,5))
+abline(h=3, col = "Red", lwd=2)
+abline(h=-3, col = "Red", lwd=2)
+
+barplot(height = studres1, names.arg = 1:6435,
+        main = "Studentized Residuals", xlab = "Index",
+        ylab = "Studentized Residuals", ylim=c(-5, 5))
+abline(h=3, col = "Red", lwd=2)
+abline(h=-3, col = "Red", lwd=2)
+
+quantile <- qt(.05/(2*6435), 6429, lower.tail = F)
+quantile
+
+barplot(height = Rstudent1, names.arg = 1:6435,
+        main = "RStudent Residuals", xlab = "Index",
+        ylab = "RStudent Residuals", ylim=c(-5,5))
+abline(h=quantile, col = "Red", lwd=2)
+abline(h=-quantile, col = "Red", lwd=2)
+```
+
+# Measures of Influence on Weekly Sales
+```{r}
+myInf <- influence.measures(fit)
+myInf
+
+influenceIndexPlot(fit, vars = c("hat"))
+
+influenceIndexPlot(fit, vars=c("Cook"))
+
+dfbetasPlots(fit,intercept=T)
+
+vif(fit)
+
+par(mfrow=c(1,2))
+hist(studres, breaks=10, freq=F, col="cornflowerblue",
+     cex.axis=1.5, cex.lab=1.5, cex.main=2)
+qqPlot(fit)
+
+residualPlot(fit, type="rstudent", quadratic=F, col = "dodgerblue",
+             pch=16, cex=1.5, cex.axis=1.5, cex.lab=1.5)
+
+```
+
+# Measures of Influence on CPI
+```{r}
+myInf <- influence.measures(fit1)
+myInf
+
+influenceIndexPlot(fit1, vars = c("hat"))
+
+influenceIndexPlot(fit1, vars=c("Cook"))
+
+dfbetasPlots(fit1, intercept=T)
+
+vif(fit1)
+
+par(mfrow=c(1,2))
+hist(studres1, breaks=10, freq=F, col="cornflowerblue",
+     cex.axis=1.5, cex.lab=1.5, cex.main=2)
+qqPlot(fit)
+
+residualPlot(fit1, type="rstudent", quadratic=F, col = "dodgerblue",
+             pch=16, cex=1.5, cex.axis=1.5, cex.lab=1.5)
+```
+
+```{r}
+fit1 <- lm(sqrt(Weekly_Sales) ~ Holiday_Flag + Temperature + Unemployment + Fuel_Price, data = walmart)
+summary(fit1)
+
+fit1 <- lm(sqrt(CPI) ~ Holiday_Flag + Temperature + Unemployment , data = walmart)
+summary(fit1)
+
+```
+
